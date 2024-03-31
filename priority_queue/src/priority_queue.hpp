@@ -19,14 +19,7 @@ namespace sjtu {
             int npl;
 
             node() {
-                data = new T;
-                left = nullptr;
-                right = nullptr;
-                npl = 0;
-            }
-
-            node(const T &e) {
-                data = new T(e);
+                data = nullptr;
                 left = nullptr;
                 right = nullptr;
                 npl = 0;
@@ -41,7 +34,7 @@ namespace sjtu {
             }
 
             bool operator<(const node &other) {
-                return !(*data < *(other.data));
+                return !Compare()(*data , *(other.data));
             }
         };
 
@@ -51,8 +44,11 @@ namespace sjtu {
         node *merge(node *l, node *r) {
             if (l == nullptr) return r;
             if (r == nullptr) return l;
-            if (*l < *r)return merge1(l, r);
-            else return merge1(r, l);
+            node* tmp;
+            if (*l < *r) tmp= merge1(l, r);
+            else tmp= merge1(r, l);
+            //delete r;
+            return tmp;
         }
 
         void swapChildren(node *t) {
@@ -61,7 +57,6 @@ namespace sjtu {
             t->left = t->right;
             t->right = tmp;
         }
-
 
         node *merge1(node *l, node *r) {
             if (l->left == nullptr) { l->left = r; }
@@ -79,7 +74,8 @@ namespace sjtu {
                 return nullptr;
             }
             t = new node;
-            *(t->data) = *(other->data);
+            if(t->data== nullptr) t->data=new T(*(other->data));
+            else *(t->data) = *(other->data);
             t->npl = other->npl;
             t->left = build(t->left, other->left);
             t->right = build(t->right, other->right);
@@ -134,11 +130,11 @@ namespace sjtu {
          * TODO Assignment operator
          */
         priority_queue &operator=(const priority_queue &other) {
+            if (this==&other) return *this;
             clear(root);
             root= build(root,other.root);
             size1=other.size1;
             return *this;
-            //root
         }
 
         /**
@@ -156,8 +152,16 @@ namespace sjtu {
          * push new element to the priority queue.
          */
         void push(const T &e) {
-            auto p1 = new node(e);
-            root = merge(p1, root);
+            //auto p1 = new node(e);
+            auto p1 = new node;
+            p1->data = new T(e);
+            try {
+                root = merge(p1, root);
+            }
+            catch (...){
+                delete p1;
+                throw runtime_error();
+            }
             size1++;
         }
 
@@ -195,7 +199,8 @@ namespace sjtu {
          */
         void merge(priority_queue &other) {
             if (this == &other) return;
-            merge(root, other.root);
+            root = merge(root, other.root);
+            //delete other.root;
             other.root = nullptr;
             size1 += other.size1;
         }
